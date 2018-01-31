@@ -1,1 +1,1 @@
-print("Ned is so hot")
+print("Ned is so o hot")
