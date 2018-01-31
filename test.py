@@ -1,0 +1,1 @@
+print("Ned is so hot")
