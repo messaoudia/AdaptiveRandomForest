@@ -2,13 +2,11 @@ from skmultiflow.classification.core.attribute_class_observers.gaussian_numeric_
     GaussianNumericAttributeClassObserver
 from skmultiflow.classification.core.attribute_class_observers.nominal_attribute_class_observer import \
     NominalAttributeClassObserver
-from skmultiflow.classification.core.attribute_class_observers.null_attribute_class_observer import \
-    NullAttributeClassObserver
-from skmultiflow.classification.core.attribute_split_suggestion import AttributeSplitSuggestion
 from skmultiflow.classification.core.utils.utils import do_naive_bayes_prediction
 from skmultiflow.classification.trees.hoeffding_tree import HoeffdingTree, MAJORITY_CLASS, NAIVE_BAYES
 from xlsxwriter.contenttypes import overrides
 import random
+import numpy as np
 
 
 class ARFHoeffdingTree (HoeffdingTree):
@@ -16,7 +14,18 @@ class ARFHoeffdingTree (HoeffdingTree):
     def __init__(self, m):
         super().__init__()
         self.m = m
+        self.remove_poor_atts = None
+        self.no_preprune = True
 
+    @staticmethod
+    def is_randomizable():
+        return True
+
+    def rf_tree_train(self, X, y):
+        self.partial_fit(X, y, weight=np.random.poisson(6, len(X)))
+
+
+    @overrides
     def _new_learning_node(self, initial_class_observations=None):
         if initial_class_observations is None:
             initial_class_observations = {}
@@ -79,6 +88,7 @@ class ARFHoeffdingTree (HoeffdingTree):
                 obs.observe_attribute_class(X[attr_index], int(y), weight)
 
     class LearningNodeNB(RandomLearningNode):
+
         def __init__(self, initial_class_observations, m):
             super().__init__(initial_class_observations, m)
 
@@ -89,17 +99,21 @@ class ARFHoeffdingTree (HoeffdingTree):
             else:
                 return super().get_class_votes(X, arf_ht)
 
+        @overrides
         def disable_attribute(self, att_index):
             # Should not disable poor attributes, they are used in NB calculation
             pass
 
     class LearningNodeNBAdaptive(LearningNodeNB):
+
         def __init__(self, initial_class_observations, m):
-            super().__init__(initial_class_observations, self.m)
+            super().__init__(initial_class_observations, m)
             self._mc_correct_weight = 0.0
             self._nb_correct_weight = 0.0
 
-        def learn_from_instance(self, X, y, weight, ht):
+        @overrides
+        def learn_from_instance(self, X, y, weight, arf_ht):
+
             if self._observed_class_distribution == {}:
                 # All classes equal, default to class 0
                 if 0 == y:
@@ -109,9 +123,10 @@ class ARFHoeffdingTree (HoeffdingTree):
             nb_prediction = do_naive_bayes_prediction(X, self._observed_class_distribution, self._attribute_observers)
             if max(nb_prediction, key=nb_prediction.get) == y:
                 self._nb_correct_weight += weight
-            super().learn_from_instance(X, y, weight, ht)
+            super().learn_from_instance(X, y, weight, arf_ht)
 
-        def get_class_votes(self, X, ht):
+        @overrides
+        def get_class_votes(self, X, arf_ht):
             if self._mc_correct_weight > self._nb_correct_weight:
                 return self._observed_class_distribution
             return do_naive_bayes_prediction(X, self._observed_class_distribution, self._attribute_observers)
