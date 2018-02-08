@@ -1,7 +1,6 @@
 from skmultiflow.classification.trees.hoeffding_tree import HoeffdingTree
 from skmultiflow.evaluation.evaluate_prequential import EvaluatePrequential
 from skmultiflow.classification.lazy.knn_adwin import KNNAdwin, KNN
-from sklearn.linear_model.stochastic_gradient import SGDClassifier
 from skmultiflow.options.file_option import FileOption
 from skmultiflow.data.file_stream import FileStream
 from src.AdaptiveRandomForest import AdaptiveRandomForest
@@ -14,6 +13,7 @@ stream = FileStream(opt, -1, 1)
 # 2. Prepare for use
 stream.prepare_for_use()
 # 2. Instantiate the HoeffdingTree classifier
+
 h = [
         KNN(k=10, max_window_size=100, leaf_size=30), 
         HoeffdingTree(),

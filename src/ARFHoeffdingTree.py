@@ -22,7 +22,7 @@ class ARFHoeffdingTree (HoeffdingTree):
         return True
 
     def rf_tree_train(self, X, y):
-        self.partial_fit(X, y, weight=np.random.poisson(6, len(X)))
+        self.partial_fit(X, y, weight=np.random.poisson(6, 1))
 
     def _new_learning_node(self, initial_class_observations=None):
         if initial_class_observations is None:
@@ -61,19 +61,19 @@ class ARFHoeffdingTree (HoeffdingTree):
                 self._observed_class_distribution[y] = 0.0
             self._observed_class_distribution[y] += weight
 
-            if self.list_attributes is None:
+            if not self.list_attributes:
                 self.list_attributes = []
                 for i in range(self.num_attributes):
                     is_unique = False
                     while not is_unique:
-                        self.list_attributes.append(random.randint(0, len(X) - 1))
+                        self.list_attributes.append(random.randint(0, len(X)))
                         is_unique = True
                         for j in range(i):
                             if self.list_attributes[i] == self.list_attributes[j]:
                                 is_unique = False
                                 break
 
-            for i in range(self.num_attributes - 1):
+            for i in range(self.num_attributes):
                 attr_index = self.list_attributes[i]
                 obs = self._attribute_observers[i]
                 if obs is None:
