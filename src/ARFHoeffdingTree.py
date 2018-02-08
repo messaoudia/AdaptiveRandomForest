@@ -17,15 +17,12 @@ class ARFHoeffdingTree (HoeffdingTree):
         self.remove_poor_atts = None
         self.no_preprune = True
 
-        return self
-
     @staticmethod
     def is_randomizable():
         return True
 
     def rf_tree_train(self, X, y):
         self.partial_fit(X, y, weight=np.random.poisson(6, len(X)))
-
 
     def _new_learning_node(self, initial_class_observations=None):
         if initial_class_observations is None:
