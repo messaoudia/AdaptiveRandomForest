@@ -92,6 +92,4 @@ class AdaptiveRandomForest:
         for index, tree in self.T:
             predictions[index] += self.W[index][0]/self.W[index][1]
 
-        max
-
         return predictions
