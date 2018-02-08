@@ -67,12 +67,16 @@ class ARFHoeffdingTree (HoeffdingTree):
                 for i in range(self.num_attributes):
                     is_unique = False
                     while not is_unique:
-                        self.list_attributes.append(random.randint(0, len(X)))
+                        self.list_attributes.append(random.randint(0, len(X) -1))
                         is_unique = True
                         for j in range(i):
                             if self.list_attributes[i] == self.list_attributes[j]:
                                 is_unique = False
                                 break
+
+                        if not is_unique:
+                            break
+
 
             for i in range(self.num_attributes):
                 attr_index = self.list_attributes[i]
