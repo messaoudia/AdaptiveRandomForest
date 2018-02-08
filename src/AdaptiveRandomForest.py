@@ -1,5 +1,5 @@
 from collections import defaultdict
-from src import ARFHoeffdingTree
+from src.ARFHoeffdingTree import ARFHoeffdingTree
 from skmultiflow.classification.core.driftdetection.adwin import ADWIN
 
 
@@ -19,8 +19,6 @@ class AdaptiveRandomForest:
         self.delta_d = delta_d
         self.Trees = None
         self.Weights = None
-
-        return self
 
     def create_trees(self):
         trees = defaultdict(lambda: ARFHoeffdingTree(self.m))
