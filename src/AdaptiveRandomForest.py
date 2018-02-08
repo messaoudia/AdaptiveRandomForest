@@ -2,6 +2,7 @@ from collections import defaultdict
 from src import ARFHoeffdingTree
 from skmultiflow.classification.core.driftdetection.adwin import ADWIN
 
+
 class AdaptiveRandomForest:
 
     def __init__(self, m, n, delta_w=0.0001, delta_d=0.00001):
@@ -17,69 +18,62 @@ class AdaptiveRandomForest:
         self.delta_w = delta_w
         self.delta_d = delta_d
 
-    def create_trees(self, n):
-        trees = defaultdict(int)
-        for i in range(n):
+    def create_trees(self):
+        trees = defaultdict(lambda: ARFHoeffdingTree(self.m))
+        for i in range(self.n):
             trees[i] = self.create_tree()
         return trees
 
     def create_tree(self):
         return ARFHoeffdingTree(self.m)
 
-    def init_weights(self, n):
-        return defaultdict(float)
-
-    def change_detector(self, t, x, y):
-        ADWIN(self.delta_d)
-        return False
+    def init_weights(self):
+        return defaultdict(list)
 
     def learning_performance(self, idx, y_predicted, y):
         # well predicted
         if y == y_predicted:
             self.W[idx][0] += 1
-        # not well predicted
-        else:
-            self.W[idx][0] += 0
 
         self.W[idx][1] += 1
 
-        nb_good_prediction = self.W[idx][0]
-        nb_seen = self.W[idx][1]
-
-        return nb_seen/nb_good_prediction
-
-    def train(self):
-        T = self.create_trees(self.n)
-        self.W = self.init_weights(self.n)
+    def train(self, X, y):
+        self.T = self.create_trees()
+        self.W = self.init_weights()
         B = defaultdict()
+
         adwin_d = ADWIN(delta=self.delta_d)
         adwin_w = ADWIN(delta=self.delta_w)
 
         new_tree = list()
         index_to_replace = list()
 
-        while has_next(S):
-            x, y = next(S)
+        for stream in range(len(X)):
+            X_ = X[stream]
+            y_ = y[stream]
 
             # first tree => idx = 0, second tree => idx = 1 ...
             idx = 0
-            for t in T:
-                y_predicted = t.predict(t, x)
-                self.W[idx] = self.learning_performance(idx=idx, y_predicted=y_predicted, y=y)
+            for key, t in enumerate(self.T.items()):
+                y_predicted = t.predict(X_)
+                self.learning_performance(idx=key, y_predicted=y_predicted, y=y_)
 
-                correct_prediction = (y == y_predicted)
+                correct_prediction = (y_ == y_predicted)
 
-                t.rf_tree_train(self.m, x, y)
+                t.rf_tree_train(self.m, X_, y_)
+                adwin_w.add_element(correct_prediction)
+                if adwin_w.detected_change():
+                    if B.get(key, None) is None:
+                        b = self.create_tree()
+                        B[key] = b
+                else:
+                    if B.get(key, None) is not None:
+                        B.pop(key)
+
                 adwin_d.add_element(correct_prediction)
-                if self.change_detector(self.delta_w, t, x, y):
-                    b = self.create_tree()
-                    B[idx] = b
-
-                if self.change_detector(self.delta_d, t, x, y):
-                    new_tree.append(B[idx])
-                    index_to_replace.append(idx)
-
-                idx += 1
+                if adwin_d.detected_change():
+                    new_tree.append(B[key])
+                    index_to_replace.append(key)
 
             # t ← B(t)
             for key, index in enumerate(index_to_replace):
@@ -89,7 +83,15 @@ class AdaptiveRandomForest:
             index_to_replace.clear()
 
             for key, value in B.items():
-                value.rf_tree_train(self.m, x, y)
+                value.rf_tree_train(X_, y_)
 
-    def predict(self, X):
-        return list()
+
+    def predict(self):
+
+        predictions = defaultdict(float)
+        for index, tree in self.T:
+            predictions[index] += self.W[index][0]/self.W[index][1]
+
+        max
+
+        return predictions
