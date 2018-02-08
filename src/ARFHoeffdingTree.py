@@ -62,7 +62,7 @@ class ARFHoeffdingTree (HoeffdingTree):
                 self._observed_class_distribution[y] = 0.0
             self._observed_class_distribution[y] += weight
 
-            if self.list_attributes is None:
+            if not self.list_attributes:
                 self.list_attributes = []
                 for i in range(self.num_attributes):
                     is_unique = False
