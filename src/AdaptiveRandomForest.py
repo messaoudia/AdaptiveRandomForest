@@ -17,6 +17,10 @@ class AdaptiveRandomForest:
         self.n = n
         self.delta_w = delta_w
         self.delta_d = delta_d
+        self.Trees = None
+        self.Weights = None
+
+        return self
 
     def create_trees(self):
         trees = defaultdict(lambda: ARFHoeffdingTree(self.m))
@@ -33,13 +37,13 @@ class AdaptiveRandomForest:
     def learning_performance(self, idx, y_predicted, y):
         # well predicted
         if y == y_predicted:
-            self.W[idx][0] += 1
+            self.Weights[idx][0] += 1
 
-        self.W[idx][1] += 1
+        self.Weights[idx][1] += 1
 
-    def train(self, X, y):
-        self.T = self.create_trees()
-        self.W = self.init_weights()
+    def partial_fit(self, X, y):
+        self.Trees = self.create_trees()
+        self.Weights = self.init_weights()
         B = defaultdict()
 
         adwin_d = ADWIN(delta=self.delta_d)
@@ -54,13 +58,13 @@ class AdaptiveRandomForest:
 
             # first tree => idx = 0, second tree => idx = 1 ...
             idx = 0
-            for key, t in enumerate(self.T.items()):
-                y_predicted = t.predict(X_)
+            for key, tree in enumerate(self.Trees.items()):
+                y_predicted = tree.predict(X_)
                 self.learning_performance(idx=key, y_predicted=y_predicted, y=y_)
 
                 correct_prediction = (y_ == y_predicted)
 
-                t.rf_tree_train(self.m, X_, y_)
+                tree.rf_tree_train(self.m, X_, y_)
                 adwin_w.add_element(correct_prediction)
                 if adwin_w.detected_change():
                     if B.get(key, None) is None:
@@ -75,9 +79,9 @@ class AdaptiveRandomForest:
                     new_tree.append(B[key])
                     index_to_replace.append(key)
 
-            # t ← B(t)
+            # tree ← B(tree)
             for key, index in enumerate(index_to_replace):
-                T[index] = new_tree[index]
+                self.Trees[index] = new_tree[index]
 
             new_tree.clear()
             index_to_replace.clear()
@@ -85,11 +89,31 @@ class AdaptiveRandomForest:
             for key, value in B.items():
                 value.rf_tree_train(X_, y_)
 
+        return self
 
-    def predict(self):
+    def predict(self, X):
+        method = "avg"
+        best_class = -1
+        # average weight
+        if method == "avg":
+            predictions = defaultdict(lambda: defaultdict(float))
+            predictions_count = dict(int)
 
-        predictions = defaultdict(float)
-        for index, tree in self.T:
-            predictions[index] += self.W[index][0]/self.W[index][1]
+            for index, tree in self.Trees:
+                y = tree.predict(X)
+                predictions[y] += self.Weights[index][0] / self.Weights[index][1]
+                predictions_count[y] += 1
 
-        return predictions
+            max_weight = -1.0
+            for key, weight in enumerate(predictions.items()):
+                if best_class != key and weight/predictions_count[key] > max_weight:
+                    max_weight = weight
+                    best_class = key
+
+        # TODO majority class
+        elif method == "mc":
+            return best_class
+
+        p = list()
+        p.append(best_class)
+        return p

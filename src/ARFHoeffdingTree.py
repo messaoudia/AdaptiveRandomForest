@@ -17,6 +17,8 @@ class ARFHoeffdingTree (HoeffdingTree):
         self.remove_poor_atts = None
         self.no_preprune = True
 
+        return self
+
     @staticmethod
     def is_randomizable():
         return True
@@ -25,7 +27,6 @@ class ARFHoeffdingTree (HoeffdingTree):
         self.partial_fit(X, y, weight=np.random.poisson(6, len(X)))
 
 
-    @overrides
     def _new_learning_node(self, initial_class_observations=None):
         if initial_class_observations is None:
             initial_class_observations = {}
@@ -44,7 +45,6 @@ class ARFHoeffdingTree (HoeffdingTree):
             self.list_attributes = []
             self.num_attributes = m
 
-        @overrides
         def learn_from_instance(self, X, y, weight, arf_ht):
             """ learn_from_instance
             Update the node with the supplied instance.
@@ -92,14 +92,12 @@ class ARFHoeffdingTree (HoeffdingTree):
         def __init__(self, initial_class_observations, m):
             super().__init__(initial_class_observations, m)
 
-        @overrides
         def get_class_votes(self, X, arf_ht):
             if self.get_weight_seen() >= arf_ht.nb_threshold:
                 return do_naive_bayes_prediction(X, self._observed_class_distribution, self._attribute_observers)
             else:
                 return super().get_class_votes(X, arf_ht)
 
-        @overrides
         def disable_attribute(self, att_index):
             # Should not disable poor attributes, they are used in NB calculation
             pass
@@ -111,7 +109,6 @@ class ARFHoeffdingTree (HoeffdingTree):
             self._mc_correct_weight = 0.0
             self._nb_correct_weight = 0.0
 
-        @overrides
         def learn_from_instance(self, X, y, weight, arf_ht):
 
             if self._observed_class_distribution == {}:
@@ -125,7 +122,6 @@ class ARFHoeffdingTree (HoeffdingTree):
                 self._nb_correct_weight += weight
             super().learn_from_instance(X, y, weight, arf_ht)
 
-        @overrides
         def get_class_votes(self, X, arf_ht):
             if self._mc_correct_weight > self._nb_correct_weight:
                 return self._observed_class_distribution
