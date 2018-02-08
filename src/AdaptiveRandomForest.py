@@ -1,11 +1,11 @@
 from collections import defaultdict
-from src import ARFHoeffdingTree
+from src.ARFHoeffdingTree import ARFHoeffdingTree
 from skmultiflow.classification.core.driftdetection.adwin import ADWIN
-
+import numpy as np
 
 class AdaptiveRandomForest:
 
-    def __init__(self, m, n, delta_w=0.0001, delta_d=0.00001):
+    def __init__(self, m, n, delta_w=0.0001, delta_d=0.00001, predict_method="avg"):
         """
         Constructor
         :param m: maximum feature evaluated per split
@@ -19,8 +19,7 @@ class AdaptiveRandomForest:
         self.delta_d = delta_d
         self.Trees = None
         self.Weights = None
-
-        return self
+        self.predict_method = predict_method
 
     def create_trees(self):
         trees = defaultdict(lambda: ARFHoeffdingTree(self.m))
@@ -32,16 +31,19 @@ class AdaptiveRandomForest:
         return ARFHoeffdingTree(self.m)
 
     def init_weights(self):
-        return defaultdict(list)
+        l = list()
+        l.append(0)
+        l.append(0)
+        return defaultdict(lambda: l)
 
     def learning_performance(self, idx, y_predicted, y):
         # well predicted
-        if y == y_predicted:
+        if y == y_predicted[0]:
             self.Weights[idx][0] += 1
 
         self.Weights[idx][1] += 1
 
-    def partial_fit(self, X, y):
+    def partial_fit(self, X, y, classes=None):
         self.Trees = self.create_trees()
         self.Weights = self.init_weights()
         B = defaultdict()
@@ -58,13 +60,14 @@ class AdaptiveRandomForest:
 
             # first tree => idx = 0, second tree => idx = 1 ...
             idx = 0
-            for key, tree in enumerate(self.Trees.items()):
+            for key, idx in enumerate(self.Trees.items()):
+                tree = self.Trees[idx]
                 y_predicted = tree.predict(X_)
                 self.learning_performance(idx=key, y_predicted=y_predicted, y=y_)
 
-                correct_prediction = (y_ == y_predicted)
+                correct_prediction = (y_ == y_predicted[0])
 
-                tree.rf_tree_train(self.m, X_, y_)
+                tree.rf_tree_train(np.asarray([X_]), np.asarray([y_]))
                 adwin_w.add_element(correct_prediction)
                 if adwin_w.detected_change():
                     if B.get(key, None) is None:
@@ -92,10 +95,9 @@ class AdaptiveRandomForest:
         return self
 
     def predict(self, X):
-        method = "avg"
         best_class = -1
         # average weight
-        if method == "avg":
+        if self.predict_method == "avg":
             predictions = defaultdict(lambda: defaultdict(float))
             predictions_count = dict(int)
 
@@ -106,12 +108,12 @@ class AdaptiveRandomForest:
 
             max_weight = -1.0
             for key, weight in enumerate(predictions.items()):
-                if best_class != key and weight/predictions_count[key] > max_weight:
-                    max_weight = weight
+                if best_class != key and self.W[weight]/predictions_count[key] > max_weight:
+                    max_weight = self.W[weight]
                     best_class = key
 
         # TODO majority class
-        elif method == "mc":
+        elif self.predict_method == "mc":
             return best_class
 
         p = list()
