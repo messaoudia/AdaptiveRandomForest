@@ -21,6 +21,10 @@ class AdaptiveRandomForest:
         self.Weights = None
         self.predict_method = predict_method
 
+        self.Trees = self.create_trees()
+        self.Weights = self.init_weights()
+        self.B = defaultdict()
+
     def create_trees(self):
         trees = defaultdict(lambda: ARFHoeffdingTree(self.m))
         for i in range(self.n):
@@ -44,9 +48,7 @@ class AdaptiveRandomForest:
         self.Weights[idx][1] += 1
 
     def partial_fit(self, X, y, classes=None):
-        self.Trees = self.create_trees()
-        self.Weights = self.init_weights()
-        B = defaultdict()
+
 
         adwin_d = ADWIN(delta=self.delta_d)
         adwin_w = ADWIN(delta=self.delta_w)
@@ -69,12 +71,12 @@ class AdaptiveRandomForest:
                 tree.rf_tree_train(np.asarray([X_]), np.asarray([y_]))
                 adwin_w.add_element(correct_prediction)
                 if adwin_w.detected_change():
-                    if B.get(key, None) is None:
+                    if self.B.get(key, None) is None:
                         b = self.create_tree()
-                        B[key] = b
+                        self.B[key] = b
                 else:
-                    if B.get(key, None) is not None:
-                        B.pop(key)
+                    if self.B.get(key, None) is not None:
+                        self.B.pop(key)
 
                 adwin_d.add_element(correct_prediction)
                 if adwin_d.detected_change():
@@ -88,7 +90,7 @@ class AdaptiveRandomForest:
             new_tree.clear()
             index_to_replace.clear()
 
-            for key, value in B.items():
+            for key, value in self.B.items():
                 value.rf_tree_train(X_, y_)
 
     def predict(self, X):
