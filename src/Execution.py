@@ -17,10 +17,10 @@ stream.prepare_for_use()
 h = [
         #KNN(k=10, max_window_size=100, leaf_size=30),
         #HoeffdingTree(),
-        AdaptiveRandomForest(m=5, n=3),
-        AdaptiveRandomForest(m=5, n=10)
+        AdaptiveRandomForest(m=7, n=10),
+        AdaptiveRandomForest(m=7, n=30)
      ]
 # 3. Setup the evaluator
-eval = EvaluatePrequential(pretrain_size=1, output_file='result_'+dataset+'.csv', max_instances=10000, batch_size=1, n_wait=500, max_time=1000000000, task_type='classification', show_plot=False, plot_options=['performance'])
+eval1 = EvaluatePrequential(pretrain_size=1000, output_file='result_'+dataset+'.csv', max_instances=10000, batch_size=1, n_wait=500, max_time=1000000000, task_type='classification', show_plot=False, plot_options=['performance'])
 # 4. Run
-eval.eval(stream=stream, classifier=h)
+eval1.eval(stream=stream, classifier=h)
