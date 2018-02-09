@@ -60,8 +60,7 @@ class AdaptiveRandomForest:
 
             # first tree => idx = 0, second tree => idx = 1 ...
             idx = 0
-            for key, idx in enumerate(self.Trees.items()):
-                tree = self.Trees[idx]
+            for key, tree in self.Trees.items():
                 y_predicted = tree.predict(X_)
                 self.learning_performance(idx=key, y_predicted=y_predicted, y=y_)
 
@@ -84,7 +83,7 @@ class AdaptiveRandomForest:
 
             # tree ← B(tree)
             for key, index in enumerate(index_to_replace):
-                self.Trees[index] = new_tree[index]
+                self.Trees[key] = new_tree[key]
 
             new_tree.clear()
             index_to_replace.clear()
@@ -92,24 +91,24 @@ class AdaptiveRandomForest:
             for key, value in B.items():
                 value.rf_tree_train(X_, y_)
 
-        return self
-
     def predict(self, X):
         best_class = -1
         # average weight
         if self.predict_method == "avg":
-            predictions = defaultdict(lambda: defaultdict(float))
-            predictions_count = dict(int)
+            predictions = defaultdict(float)
+            predictions_count = defaultdict(int)
 
-            for index, tree in self.Trees:
+            for index, val in enumerate(self.Trees.items()):
+                tree = self.Trees[index]
                 y = tree.predict(X)
-                predictions[y] += self.Weights[index][0] / self.Weights[index][1]
-                predictions_count[y] += 1
+                predictions[y[0]] += self.Weights[index][0] / self.Weights[index][1]
+                predictions_count[y[0]] += 1
 
             max_weight = -1.0
-            for key, weight in enumerate(predictions.items()):
-                if best_class != key and self.W[weight]/predictions_count[key] > max_weight:
-                    max_weight = self.W[weight]
+            for key, weight in predictions.items():
+                w = predictions[key]/predictions_count[key]
+                if best_class != key and w > max_weight:
+                    max_weight = w
                     best_class = key
 
         # TODO majority class
