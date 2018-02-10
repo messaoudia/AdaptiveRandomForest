@@ -36,7 +36,9 @@ class ARFHoeffdingTree (HoeffdingTree):
         return True
 
     def rf_tree_train(self, X, y):
-        self.partial_fit(X, y, weight=np.random.poisson(6, 1))
+        w = np.random.poisson(6, len(X))
+        if w > 0:
+            self.partial_fit(X, y, weight=w)
 
     def _new_learning_node(self, initial_class_observations=None):
         if initial_class_observations is None:
