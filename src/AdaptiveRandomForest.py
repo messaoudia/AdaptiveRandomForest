@@ -5,7 +5,7 @@ import numpy as np
 
 class AdaptiveRandomForest:
 
-    def __init__(self, m, n, delta_w=0.0001, delta_d=0.00001, predict_method="avg"):
+    def __init__(self, m, n, delta_w=0.01, delta_d=0.001, predict_method="avg"):
         """
         Constructor
         :param m: maximum feature evaluated per split
