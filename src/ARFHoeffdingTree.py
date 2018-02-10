@@ -2,7 +2,6 @@ from skmultiflow.classification.core.attribute_class_observers.gaussian_numeric_
     GaussianNumericAttributeClassObserver
 from skmultiflow.classification.core.attribute_class_observers.nominal_attribute_class_observer import \
     NominalAttributeClassObserver
-from skmultiflow.classification.core.driftdetection.adwin import ADWIN
 from skmultiflow.classification.core.utils.utils import do_naive_bayes_prediction
 from skmultiflow.classification.trees.hoeffding_tree import HoeffdingTree, MAJORITY_CLASS, NAIVE_BAYES
 import random
@@ -25,10 +24,7 @@ class ARFHoeffdingTree (HoeffdingTree):
         self.m = m
         self.remove_poor_atts = None
         self.no_preprune = False
-        self.delta_warning = 0.001
-        self.delta_drift = 0.005
-        self.adwin_warning = ADWIN(delta=self.delta_warning)
-        self.adwin_drift = ADWIN(delta=self.delta_drift)
+
 
     @staticmethod
     def is_randomizable():

@@ -15,15 +15,18 @@ class AdaptiveRandomForest:
         """
         self.m = m
         self.n = n
-        self.delta_w = delta_w
-        self.delta_d = delta_d
-        self.Trees = None
-        self.Weights = None
+        self.delta_warning = delta_w
+        self.delta_drift = delta_d
+
+
         self.predict_method = predict_method
 
         self.Trees = self.create_trees()
         self.Weights = self.init_weights()
         self.B = defaultdict()
+
+        self.adwin_warning = ADWIN(delta=self.delta_warning)
+        self.adwin_drift = ADWIN(delta=self.delta_drift)
 
     def create_trees(self):
         trees = defaultdict(lambda: ARFHoeffdingTree(self.m))
@@ -66,8 +69,8 @@ class AdaptiveRandomForest:
                 correct_prediction = (y_ == y_predicted[0])
 
                 tree.rf_tree_train(np.asarray([X_]), np.asarray([y_]))
-                tree.adwin_warning.add_element(correct_prediction)
-                if tree.adwin_warning.detected_change():
+                self.adwin_warning.add_element(correct_prediction)
+                if self.adwin_warning.detected_change():
                     if self.B.get(key, None) is None:
                         b = self.create_tree()
                         self.B[key] = b
@@ -75,9 +78,8 @@ class AdaptiveRandomForest:
                     if self.B.get(key, None) is not None:
                         self.B.pop(key)
 
-                tree.adwin_drift.add_element(correct_prediction)
-                if tree.adwin_drift.detected_change():
-                    #TODO
+                self.adwin_drift.add_element(correct_prediction)
+                if self.adwin_drift.detected_change():
                     if self.B.get(key, None) is None: # Added condition, there is some problem here, we detected a drift before warning
                         b = self.create_tree() # Also too many trees is being created
                         self.B[key] = b
