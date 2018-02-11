@@ -30,8 +30,8 @@ class AdaptiveRandomForest:
 
     def init_weights(self):
         l = list()
-        l.append(0)
-        l.append(0)
+        l.append(1)
+        l.append(1)
         return defaultdict(lambda: l)
 
     def learning_performance(self, idx, y_predicted, y):
@@ -60,7 +60,12 @@ class AdaptiveRandomForest:
                 if self.number_of_instances_seen > 1000:
                     y_predicted = tree.predict(np.asarray([X_]))
                     self.learning_performance(idx=key, y_predicted=y_predicted, y=y_)
-                    correct_prediction = (y_ == y_predicted[0])
+                    correct_prediction = 0
+
+                    if y_ == y_predicted[0]:
+                        correct_prediction = 1
+
+
                     tree.adwin_warning.add_element(correct_prediction)
                     tree.adwin_drift.add_element(correct_prediction)
                     if tree.adwin_warning.detected_change():
