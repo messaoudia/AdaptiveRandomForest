@@ -4,6 +4,7 @@ from skmultiflow.classification.lazy.knn_adwin import KNNAdwin, KNN
 from skmultiflow.options.file_option import FileOption
 from skmultiflow.data.file_stream import FileStream
 from src.AdaptiveRandomForest import AdaptiveRandomForest
+from skmultiflow.classification.meta.leverage_bagging import LeverageBagging
 
 dataset = "poker"
 
@@ -15,12 +16,11 @@ stream.prepare_for_use()
 # 2. Instantiate the HoeffdingTree classifier
 
 h = [
-        #KNN(k=10, max_window_size=100, leaf_size=30),
+        #LeverageBagging(h=KNN(), ensemble_length=2),
         HoeffdingTree(),
-        AdaptiveRandomForest(m=4, n=100),
-        #AdaptiveRandomForest(m=8, n=25)
+        AdaptiveRandomForest(m=25, n=100),
      ]
 # 3. Setup the evaluator
-eval1 = EvaluatePrequential(pretrain_size=1000, output_file='result_'+dataset+'.csv', max_instances=20000, batch_size=1, n_wait=500, max_time=1000000000, task_type='classification', show_plot=False, plot_options=['performance'])
+eval1 = EvaluatePrequential(pretrain_size=1000, output_file='result_'+dataset+'.csv', max_instances=10000, batch_size=1, n_wait=500, max_time=1000000000, task_type='classification', show_plot=False, plot_options=['performance'])
 # 4. Run
 eval1.eval(stream=stream, classifier=h)
