@@ -4,16 +4,49 @@ import numpy as np
 
 
 class AdaptiveRandomForest:
+    """ AdaptiveRandomForest or ARF
 
-    def __init__(self, m, n, predict_method="mc"):
+        An Adaptive Random Forest is
+
+        A Hoeffding tree is an incremental, anytime decision tree induction algorithm that is capable of learning from
+        massive data streams, assuming that the distribution generating examples does not change over time. Hoeffding trees
+        exploit the fact that a small sample can often be enough to choose an optimal splitting attribute. This idea is
+        supported mathematically by the Hoeffding bound, which quantifies the number of observations (in our case, examples)
+        needed to estimate some statistics within a prescribed precision (in our case, the goodness of an attribute).
+
+
+            See for details:
+            Adaptive random forests for evolving data stream classification
+            Heitor M. Gomes, Albert Bifet, Jesse Read, Jean Paul Barddal,
+            Fabricio Enembreck, Bernhard Pfharinger, Geoff Holmes, Talel Abdessalem
+
+
+        Parameters
+        ----------
+
+        nb_features: Int
+            The number of features a leaf should observe.
+
+        nb_trees: Int
+            The number of trees that the forest should contain
+
+        predict_method: String
+            Prediction method: either Majority Classifier "mc", Average "avg"
+
+        """
+
+    def __init__(self, nb_features=5, nb_trees=100, predict_method="mc", pretrain_size=1000):
         """
         Constructor
-        :param m: maximum feature evaluated per split
-        :param n: total number of trees
+        :param predict_method:
+        :type predict_method:
+        :param nb_features: maximum feature evaluated per split
+        :param nb_trees: total number of trees
         """
-        self.m = m
-        self.n = n
+        self.m = nb_features
+        self.n = nb_trees
         self.predict_method = predict_method
+        self.pretrain_size = pretrain_size
 
         self.Trees = self.create_trees()
         self.Weights = self.init_weights()
@@ -21,29 +54,63 @@ class AdaptiveRandomForest:
         self.number_of_instances_seen = 0
 
     def create_trees(self):
+        """
+        Create nb_trees, trees
+        :return: a dictionnary of trees
+        :rtype: Dictionnary
+        """
         trees = defaultdict(lambda: ARFHoeffdingTree(self.m))
         for i in range(self.n):
             trees[i] = self.create_tree()
         return trees
 
     def create_tree(self):
+        """
+        Create a ARF Hoeffding tree
+        :return: a tree
+        :rtype: ARFHoeffdingTree
+        """
         return ARFHoeffdingTree(self.m)
 
     def init_weights(self):
+        """
+        Init weight of the trees. Weight is 1 per default
+        :return: a dictionnary of weight, where each weight is associated to 1 ARF Hoeffding Tree
+        :rtype: Dictionnary
+        """
         l = list()
         l.append(1)
         l.append(1)
         return defaultdict(lambda: l)
 
     def learning_performance(self, idx, y_predicted, y):
-        # well predicted
+        """
+        Compute the learning performance of one tree at the index "idx"
+        :param idx: index of the tree in the dictionnary
+        :type idx: Int
+        :param y_predicted: Prediction result
+        :type y_predicted: Int
+        :param y: The real y, from the training
+        :type y: Int
+        :return: /
+        :rtype: /
+        """
+        # if well predicted, count th
         if y == y_predicted[0]:
             self.Weights[idx][0] += 1
 
         self.Weights[idx][1] += 1
 
     def partial_fit(self, X, y, classes=None):
-
+        """
+        Partial fit over X and y arrays
+        :param X: Features
+        :type X: 2D Array
+        :param y: Classes
+        :type y: 2D Array
+        :return:
+        :rtype:
+        """
         new_tree = list()
         index_to_replace = list()
         rows, cols = X.shape
@@ -56,7 +123,7 @@ class AdaptiveRandomForest:
             # first tree => idx = 0, second tree => idx = 1 ...
 
             for key, tree in self.Trees.items():
-                if self.number_of_instances_seen > 1000:
+                if self.number_of_instances_seen > self.pretrain_size:
                     y_predicted = tree.predict(np.asarray([X_]))
                     self.learning_performance(idx=key, y_predicted=y_predicted, y=y_)
                     if y_ == y_predicted[0]:
@@ -94,36 +161,53 @@ class AdaptiveRandomForest:
             index_to_replace.clear()
 
     def predict(self, X):
-        best_class = -1
-        # average weight
-        predictions = defaultdict(float)
-        predictions_count = defaultdict(int)
+        """
 
-        if self.predict_method == "avg":
+        :param X:
+        :type X:
+        :return:
+        :rtype:
+        """
+        r, _ = X.shape
+        predictions_result = list()
 
-            for key, tree in self.Trees.items():
-                y_predicted = tree.predict(X)
-                predictions[y_predicted[0]] += self.Weights[key][0] / self.Weights[key][1]
-                predictions_count[y_predicted[0]] += 1
+        for row in range(r):
+            X_ = X[row]
 
-            max_weight = -1.0
-            for key, weight in predictions.items():
-                w = predictions[key]/predictions_count[key]
-                if best_class != key and w > max_weight:
-                    max_weight = w
-                    best_class = key
+            best_class = -1
+            # average weight
+            predictions = defaultdict(float)
+            predictions_count = defaultdict(int)
 
-        # TODO majority class
-        elif self.predict_method == "mc":
-            for key, tree in self.Trees.items():
-                y_predicted = tree.predict(X)
-                predictions_count[y_predicted[0]] += 1
-            max_value = -1.0
-            for key, value in predictions_count.items():
-                if value > max_value:
-                    best_class = key
-                    max_value = value
+            if self.predict_method == "avg":
 
-        p = list()
-        p.append(best_class)
-        return p
+                global_weight = 0.0
+
+                for key, tree in self.Trees.items():
+                    y_predicted = tree.predict(np.asarray([X_]))
+                    learning_perf = self.Weights[key][0] / self.Weights[key][1]
+                    predictions[y_predicted[0]] += learning_perf
+                    global_weight += learning_perf
+                    # predictions_count[y_predicted[0]] += 1
+
+                max_weight = -1.0
+                for key, weight in predictions.items():
+                    w = predictions[key] / global_weight
+                    if best_class != key and w > max_weight:
+                        max_weight = w
+                        best_class = key
+
+            elif self.predict_method == "mc":
+                for key, tree in self.Trees.items():
+                    y_predicted = tree.predict(np.asarray([X_]))
+                    predictions_count[y_predicted[0]] += 1
+                max_value = -1.0
+
+                for key, value in predictions_count.items():
+                    if value > max_value:
+                        best_class = key
+                        max_value = value
+
+            predictions_result.append(best_class)
+
+        return predictions_result
