@@ -35,7 +35,7 @@ class AdaptiveRandomForest:
 
         """
 
-    def __init__(self, nb_features=5, nb_trees=100, predict_method="mc", pretrain_size=1000):
+    def __init__(self, nb_features=5, nb_trees=100, predict_method="mc", pretrain_size=1000, delta_w=0.01, delta_d=0.001):
         """
         Constructor
         :param predict_method:
@@ -47,6 +47,8 @@ class AdaptiveRandomForest:
         self.n = nb_trees
         self.predict_method = predict_method
         self.pretrain_size = pretrain_size
+        self.delta_d = delta_d
+        self.delta_w = delta_w
 
         self.Trees = self.create_trees()
         self.Weights = self.init_weights()
@@ -59,7 +61,7 @@ class AdaptiveRandomForest:
         :return: a dictionnary of trees
         :rtype: Dictionnary
         """
-        trees = defaultdict(lambda: ARFHoeffdingTree(self.m))
+        trees = defaultdict(lambda: ARFHoeffdingTree(self.m, self.delta_w, self.delta_d))
         for i in range(self.n):
             trees[i] = self.create_tree()
         return trees
@@ -70,7 +72,7 @@ class AdaptiveRandomForest:
         :return: a tree
         :rtype: ARFHoeffdingTree
         """
-        return ARFHoeffdingTree(self.m)
+        return ARFHoeffdingTree(self.m,self.delta_w, self.delta_d)
 
     def init_weights(self):
         """

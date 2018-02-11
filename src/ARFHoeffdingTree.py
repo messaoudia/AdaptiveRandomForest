@@ -94,7 +94,7 @@ class ARFHoeffdingTree (HoeffdingTree):
 
 
     """
-    def __init__(self, m, delta_w=0.01, delta_d=0.001, grace_period=50, leaf_prediction='nb', no_pre_prune=True):
+    def __init__(self, m, delta_w, delta_d, grace_period=50, leaf_prediction='nb', no_pre_prune=True):
         super().__init__()
         self.m = m
         self.remove_poor_atts = None
