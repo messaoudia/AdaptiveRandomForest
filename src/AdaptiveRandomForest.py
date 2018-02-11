@@ -1,10 +1,11 @@
-from collections import defaultdict
+from collections import defaultdict, Counter
 from src.ARFHoeffdingTree import ARFHoeffdingTree
 import numpy as np
 
+
 class AdaptiveRandomForest:
 
-    def __init__(self, m, n, predict_method="avg"):
+    def __init__(self, m, n, predict_method="mc"):
         """
         Constructor
         :param m: maximum feature evaluated per split
@@ -75,18 +76,19 @@ class AdaptiveRandomForest:
                     if tree.adwin_drift.detected_change():
                         if self.B.get(key, None) is None:
                             # Added condition, there is some problem here, we detected a drift before warning
-                            b = self.create_tree()# Also too many trees is being created
+                            b = self.create_tree()  # Also too many trees is being created
                             self.B[key] = b
                         new_tree.append(self.B[key])
                         index_to_replace.append(key)
                 tree.rf_tree_train(np.asarray([X_]), np.asarray([y_]))
 
             for key, value in self.B.items():
-                value.rf_tree_train(np.asarray([X_]), np.asarray([y_])) # Changed
+                value.rf_tree_train(np.asarray([X_]), np.asarray([y_]))  # Changed
 
             # tree ← B(tree)
             for key, index in enumerate(index_to_replace):
-                self.Trees[key] = new_tree[key]
+                self.Trees[index] = new_tree[key]
+                self.B.pop(index)
 
             new_tree.clear()
             index_to_replace.clear()
@@ -94,14 +96,14 @@ class AdaptiveRandomForest:
     def predict(self, X):
         best_class = -1
         # average weight
-        if self.predict_method == "avg":
-            predictions = defaultdict(float)
-            predictions_count = defaultdict(int)
+        predictions = defaultdict(float)
+        predictions_count = defaultdict(int)
 
-            for index, val in enumerate(self.Trees.items()):
-                tree = self.Trees[index]
+        if self.predict_method == "avg":
+
+            for key, tree in self.Trees.items():
                 y_predicted = tree.predict(X)
-                predictions[y_predicted[0]] += self.Weights[index][0] / self.Weights[index][1]
+                predictions[y_predicted[0]] += self.Weights[key][0] / self.Weights[key][1]
                 predictions_count[y_predicted[0]] += 1
 
             max_weight = -1.0
@@ -113,7 +115,14 @@ class AdaptiveRandomForest:
 
         # TODO majority class
         elif self.predict_method == "mc":
-            return best_class
+            for key, tree in self.Trees.items():
+                y_predicted = tree.predict(X)
+                predictions_count[y_predicted[0]] += 1
+            max_value = -1.0
+            for key, value in predictions_count.items():
+                if value > max_value:
+                    best_class = key
+                    max_value = value
 
         p = list()
         p.append(best_class)

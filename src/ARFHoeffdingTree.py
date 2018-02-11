@@ -20,7 +20,7 @@ class ARFHoeffdingTree (HoeffdingTree):
     def fit(self, X, y, classes=None, weight=None):
         pass
 
-    def __init__(self, m, delta_w=0.0001, delta_d=0.00001,):
+    def __init__(self, m, delta_w=0.01, delta_d=0.001,):
         super().__init__()
         self.m = m
         self.remove_poor_atts = None
@@ -29,7 +29,8 @@ class ARFHoeffdingTree (HoeffdingTree):
         self.delta_drift = delta_d
         self.adwin_warning = ADWIN(delta=self.delta_warning)
         self.adwin_drift = ADWIN(delta=self.delta_drift)
-
+        self.leaf_prediction = 'nb'
+        self.grace_period = 50
 
     @staticmethod
     def is_randomizable():
@@ -72,6 +73,8 @@ class ARFHoeffdingTree (HoeffdingTree):
             ht: The Hoeffding Tree
 
             """
+            if self.num_attributes <= 0 or self.num_attributes > len(X) - 1:
+                self.num_attributes = len(X) - 1
             if not self._is_initialized:
                 self._attribute_observers = [None] * self.num_attributes
                 self._is_initialized = True
@@ -103,10 +106,13 @@ class ARFHoeffdingTree (HoeffdingTree):
             super().__init__(initial_class_observations, m)
 
         def get_class_votes(self, X, ht):
+            observed_x = []
+            for attr_index in self.list_attributes:
+                observed_x.append(X[attr_index])
             if self.get_weight_seen() >= ht.nb_threshold:
-                return do_naive_bayes_prediction(X, self._observed_class_distribution, self._attribute_observers)
+                return do_naive_bayes_prediction(np.asarray(observed_x), self._observed_class_distribution, self._attribute_observers)
             else:
-                return super().get_class_votes(X, ht)
+                return super().get_class_votes(np.asarray(observed_x), ht)
 
         def disable_attribute(self, att_index):
             # Should not disable poor attributes, they are used in NB calculation
@@ -133,6 +139,9 @@ class ARFHoeffdingTree (HoeffdingTree):
             super().learn_from_instance(X, y, weight, ht)
 
         def get_class_votes(self, X, ht):
+            observed_x = []
+            for attr_index in self.list_attributes:
+                observed_x.append(X[attr_index])
             if self._mc_correct_weight > self._nb_correct_weight:
                 return self._observed_class_distribution
-            return do_naive_bayes_prediction(X, self._observed_class_distribution, self._attribute_observers)
+            return do_naive_bayes_prediction(np.asarray(observed_x), self._observed_class_distribution, self._attribute_observers)
