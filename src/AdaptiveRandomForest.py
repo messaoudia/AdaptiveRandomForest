@@ -46,7 +46,7 @@ class AdaptiveRandomForest:
         self.m = nb_features
         self.n = nb_trees
         self.predict_method = predict_method
-        self.pre_train_size = pretrain_size
+        self.pretrain_size = pretrain_size
 
         self.Trees = self.create_trees()
         self.Weights = self.init_weights()
