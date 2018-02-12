@@ -158,17 +158,25 @@ class AdaptiveRandomForest:
             for key, index in enumerate(index_to_replace):
                 self.Trees[index] = new_tree[key]
                 self.B.pop(index)
+                self.Weights[index][0] = 1
+                self.Weights[index][1] = 1
 
             new_tree.clear()
             index_to_replace.clear()
 
     def predict(self, X):
         """
+        Predicts the label of the X instance(s)
 
-        :param X:
-        :type X:
-        :return:
-        :rtype:
+        Parameters
+        ----------
+        X: Numpy.ndarray of shape (n_samples, n_features)
+        All the samples we want to predict the label for.
+
+        Returns
+        -------
+        list
+        A list containing the predicted labels for all instances in X.
         """
         r, _ = X.shape
         predictions_result = list()
