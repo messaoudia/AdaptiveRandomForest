@@ -6,16 +6,10 @@ import numpy as np
 class AdaptiveRandomForest:
     """ AdaptiveRandomForest or ARF
 
-        An Adaptive Random Forest is
+        An Adaptive Random Forest is a classification algorithm that want to make
+        Random Forest, which is not a stream algorithm, be again among the best classifier in streaming
+        In this code you will find the implementation of the ARF described on :
 
-        A Hoeffding tree is an incremental, anytime decision tree induction algorithm that is capable of learning from
-        massive data streams, assuming that the distribution generating examples does not change over time. Hoeffding trees
-        exploit the fact that a small sample can often be enough to choose an optimal splitting attribute. This idea is
-        supported mathematically by the Hoeffding bound, which quantifies the number of observations (in our case, examples)
-        needed to estimate some statistics within a prescribed precision (in our case, the goodness of an attribute).
-
-
-            See for details:
             Adaptive random forests for evolving data stream classification
             Heitor M. Gomes, Albert Bifet, Jesse Read, Jean Paul Barddal,
             Fabricio Enembreck, Bernhard Pfharinger, Geoff Holmes, Talel Abdessalem
@@ -107,9 +101,9 @@ class AdaptiveRandomForest:
         """
         Partial fit over X and y arrays
         :param X: Features
-        :type X: 2D Array
+        :type X: Numpy.ndarray of shape (n_samples, n_features)
         :param y: Classes
-        :type y: 2D Array
+        :type y: Vector
         :return:
         :rtype:
         """

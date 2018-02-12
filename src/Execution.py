@@ -16,9 +16,10 @@ stream.prepare_for_use()
 # 2. Instantiate the HoeffdingTree classifier
 
 h = [
+        HoeffdingTree(),
         AdaptiveRandomForest(nb_features=6, nb_trees=100, predict_method="avg", pretrain_size=pre_train_size,
                              delta_d=0.001, delta_w=0.01),
-AdaptiveRandomForest(nb_features=6, nb_trees=5, predict_method="avg", pretrain_size=pre_train_size,
+        AdaptiveRandomForest(nb_features=6, nb_trees=5, predict_method="avg", pretrain_size=pre_train_size,
                              delta_d=0.001, delta_w=0.01)
         #AdaptiveRandomForest(nb_features=3, nb_trees=80, predict_method="avg", pretrain_size=pre_train_size,
           #                   delta_d=0.001, delta_w=0.01)
