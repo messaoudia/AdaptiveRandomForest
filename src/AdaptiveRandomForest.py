@@ -158,6 +158,8 @@ class AdaptiveRandomForest:
             for key, index in enumerate(index_to_replace):
                 self.Trees[index] = new_tree[key]
                 self.B.pop(index)
+                self.Weights[index][0] = 1
+                self.Weights[index][1] = 1
 
             new_tree.clear()
             index_to_replace.clear()
