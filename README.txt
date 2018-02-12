@@ -1,4 +1,6 @@
 # Adaptive Random Forest
+Article used : https://www.researchgate.net/publication/317579226_Adaptive_random_forests_for_evolving_data_stream_classification
+By Albert Bifet & al.
 
 Project done by
 - Jeremy AECK
