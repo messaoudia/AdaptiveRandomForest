@@ -166,11 +166,17 @@ class AdaptiveRandomForest:
 
     def predict(self, X):
         """
+        Predicts the label of the X instance(s)
 
-        :param X:
-        :type X:
-        :return:
-        :rtype:
+        Parameters
+        ----------
+        X: Numpy.ndarray of shape (n_samples, n_features)
+        All the samples we want to predict the label for.
+
+        Returns
+        -------
+        list
+        A list containing the predicted labels for all instances in X.
         """
         r, _ = X.shape
         predictions_result = list()
